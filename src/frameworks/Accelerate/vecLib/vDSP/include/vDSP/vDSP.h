@@ -216,12 +216,38 @@ void* vDSP_vasm(void);
 void* vDSP_vasmD(void);
 void* vDSP_vavlin(void);
 void* vDSP_vavlinD(void);
-void* vDSP_vclip(void);
-void* vDSP_vclipD(void);
+
+extern void vDSP_vclip(
+    const float *__A,
+    vDSP_Stride  __IA,
+    const float *__B,
+    const float *__C,
+    float       *__D,
+    vDSP_Stride  __ID,
+    vDSP_Length  __N);
+
+extern void vDSP_vclipD(
+    const double *__A,
+    vDSP_Stride   __IA,
+    const double *__B,
+    const double *__C,
+    double       *__D,
+    vDSP_Stride   __ID,
+    vDSP_Length   __N);
+
 void* vDSP_vclipc(void);
 void* vDSP_vclipcD(void);
-void* vDSP_vclr(void);
-void* vDSP_vclrD(void);
+
+extern void vDSP_vclr(
+    float       *__C,
+    vDSP_Stride  __IC,
+    vDSP_Length  __N);
+
+extern void vDSP_vclrD(
+    double      *__C,
+    vDSP_Stride  __IC,
+    vDSP_Length  __N);
+
 void* vDSP_vcmprs(void);
 void* vDSP_vcmprsD(void);
 void* vDSP_vdbcon(void);
@@ -350,7 +376,15 @@ void* vDSP_vrsum(void);
 void* vDSP_vrsumD(void);
 void* vDSP_vrvrs(void);
 void* vDSP_vrvrsD(void);
-void* vDSP_vsadd(void);
+
+extern void vDSP_vsadd(
+    const float *__A,
+    vDSP_Stride  __IA,
+    const float *__B,
+    float       *__C,
+    vDSP_Stride  __IC,
+    vDSP_Length  __N);
+
 void* vDSP_vsaddD(void);
 void* vDSP_vsaddi(void);
 void* vDSP_vsbm(void);
@@ -374,8 +408,23 @@ void* vDSP_vsmsb(void);
 void* vDSP_vsmsbD(void);
 void* vDSP_vsmsma(void);
 void* vDSP_vsmsmaD(void);
-void* vDSP_vsmul(void);
-void* vDSP_vsmulD(void);
+
+extern void vDSP_vsmul(
+    const float *__A,
+    vDSP_Stride  __IA,
+    const float *__B,
+    float       *__C,
+    vDSP_Stride  __IC,
+    vDSP_Length  __N);
+
+extern void vDSP_vsmulD(
+    const double *__A,
+    vDSP_Stride   __IA,
+    const double *__B,
+    double       *__C,
+    vDSP_Stride   __IC,
+    vDSP_Length   __N);
+
 void* vDSP_vsort(void);
 void* vDSP_vsortD(void);
 void* vDSP_vsorti(void);

@@ -1189,18 +1189,6 @@ void* vDSP_vavlinD(void)
     return NULL;
 }
 
-void* vDSP_vclip(void)
-{
-    if (verbose) puts("STUB: vDSP_vclip called");
-    return NULL;
-}
-
-void* vDSP_vclipD(void)
-{
-    if (verbose) puts("STUB: vDSP_vclipD called");
-    return NULL;
-}
-
 void* vDSP_vclipc(void)
 {
     if (verbose) puts("STUB: vDSP_vclipc called");
@@ -1210,18 +1198,6 @@ void* vDSP_vclipc(void)
 void* vDSP_vclipcD(void)
 {
     if (verbose) puts("STUB: vDSP_vclipcD called");
-    return NULL;
-}
-
-void* vDSP_vclr(void)
-{
-    if (verbose) puts("STUB: vDSP_vclr called");
-    return NULL;
-}
-
-void* vDSP_vclrD(void)
-{
-    if (verbose) puts("STUB: vDSP_vclrD called");
     return NULL;
 }
 
@@ -1618,18 +1594,6 @@ void* vDSP_vgenp(void)
 void* vDSP_vgenpD(void)
 {
     if (verbose) puts("STUB: vDSP_vgenpD called");
-    return NULL;
-}
-
-void* vDSP_viclip(void)
-{
-    if (verbose) puts("STUB: vDSP_viclip called");
-    return NULL;
-}
-
-void* vDSP_viclipD(void)
-{
-    if (verbose) puts("STUB: vDSP_viclipD called");
     return NULL;
 }
 
@@ -2136,18 +2100,6 @@ void* vDSP_vsmsma(void)
 void* vDSP_vsmsmaD(void)
 {
     if (verbose) puts("STUB: vDSP_vsmsmaD called");
-    return NULL;
-}
-
-void* vDSP_vsmul(void)
-{
-    if (verbose) puts("STUB: vDSP_vsmul called");
-    return NULL;
-}
-
-void* vDSP_vsmulD(void)
-{
-    if (verbose) puts("STUB: vDSP_vsmulD called");
     return NULL;
 }
 
