@@ -402,3 +402,48 @@
 [submodule "src/external/Libinfo"]
 	path = src/external/Libinfo
 	url = ../darling-Libinfo.git
+[submodule "src/external/librpcsvc"]
+	path = src/external/librpcsvc
+	url = ../darling-librpcsvc.git
+[submodule "src/external/architecture"]
+	path = src/external/architecture
+	url = ../darling-architecture
+[submodule "src/external/bootstrap_cmds"]
+	path = src/external/bootstrap_cmds
+	url = ../darling-bootstrap_cmds.git
+[submodule "src/external/copyfile"]
+	path = src/external/copyfile
+	url = ../darling-copyfile.git
+[submodule "src/external/keymgr"]
+	path = src/external/keymgr
+	url = ../darling-keymgr.git
+[submodule "src/external/libedit"]
+	path = src/external/libedit
+	url = ../darling-libedit.git
+[submodule "src/external/libiconv"]
+	path = src/external/libiconv
+	url = ../darling-libiconv.git
+[submodule "src/external/libresolv"]
+	path = src/external/libresolv
+	url = ../darling-libresolv.git
+[submodule "src/external/libstdcxx"]
+	path = src/external/libstdcxx
+	url = ../darling-libstdcxx.git
+[submodule "src/external/libunwind"]
+	path = src/external/libunwind
+	url = ../darling-libunwind.git
+[submodule "src/external/libutil"]
+	path = src/external/libutil
+	url = ../darling-libutil.git
+[submodule "src/external/ncurses"]
+	path = src/external/ncurses
+	url = ../darling-ncurses.git
+[submodule "src/external/netcat"]
+	path = src/external/netcat
+	url = ../darling-netcat.git
+[submodule "src/external/removefile"]
+	path = src/external/removefile
+	url = ../darling-removefile.git
+[submodule "src/external/xar"]
+	path = src/external/xar
+	url = ../darling-xar.git
