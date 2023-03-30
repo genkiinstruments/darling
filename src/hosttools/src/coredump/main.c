@@ -8,6 +8,7 @@
 #include <errno.h>
 #include <sys/stat.h>
 #include <pwd.h>
+#include <libgen.h>
 
 #include <mach-o/loader.h>
 #include <elf.h>
@@ -15,7 +16,7 @@
 #include <linux/time_types.h>
 
 #if __x86_64__
-#include "x86_64.h"
+#include <coredump/x86_64.h>
 #else
 #error Not implemented
 #endif
@@ -38,18 +39,75 @@ struct vm_area {
 	uint64_t expected_offset;
 };
 
-struct nt_file_header {
+struct elf32_nt_file_header {
+	uint32_t count;
+	uint32_t page_size;
+};
+
+struct elf64_nt_file_header {
 	uint64_t count;
 	uint64_t page_size;
 };
 
-struct nt_file_entry {
+union nt_file_header {
+	struct elf32_nt_file_header elf32;
+	struct elf64_nt_file_header elf64;
+};
+
+struct elf32_nt_file_entry {
+	uint32_t start;
+	uint32_t end;
+	uint32_t offset;
+};
+
+struct elf64_nt_file_entry {
 	uint64_t start;
 	uint64_t end;
 	uint64_t offset;
 };
 
-struct nt_prstatus {
+union nt_file_entry {
+	struct elf32_nt_file_entry elf32;
+	struct elf64_nt_file_entry elf64;
+};
+
+union elf32_nt_prstatus_registers {
+	struct nt_prstatus_registers_i386 i386;
+};
+
+union elf64_nt_prstatus_registers {
+	struct nt_prstatus_registers_x86_64 x86_64;
+};
+
+struct elf32_kernel_old_timeval {
+	int tv_sec;
+	int tv_usec;
+};
+
+struct elf64_kernel_old_timeval {
+	long tv_sec;
+	long tv_usec;
+};
+
+struct elf32_nt_prstatus {
+	int signal_number;
+	int signal_code;
+	int signal_errno;
+	short current_signal;
+	unsigned int pending_signals;
+	unsigned int held_signals;
+	pid_t pid;
+	pid_t ppid;
+	pid_t pgrp;
+	pid_t sid;
+	struct elf32_kernel_old_timeval user_time;
+	struct elf32_kernel_old_timeval system_time;
+	struct elf32_kernel_old_timeval cumulative_user_time;
+	struct elf32_kernel_old_timeval cumulative_system_time;
+	union elf32_nt_prstatus_registers general_registers;
+};
+
+struct elf64_nt_prstatus {
 	int signal_number;
 	int signal_code;
 	int signal_errno;
@@ -60,30 +118,67 @@ struct nt_prstatus {
 	pid_t ppid;
 	pid_t pgrp;
 	pid_t sid;
-	struct __kernel_old_timeval user_time;
-	struct __kernel_old_timeval system_time;
-	struct __kernel_old_timeval cumulative_user_time;
-	struct __kernel_old_timeval cumulative_system_time;
-	struct nt_prstatus_registers general_registers;
+	struct elf64_kernel_old_timeval user_time;
+	struct elf64_kernel_old_timeval system_time;
+	struct elf64_kernel_old_timeval cumulative_user_time;
+	struct elf64_kernel_old_timeval cumulative_system_time;
+	union elf64_nt_prstatus_registers general_registers;
+};
+
+union nt_prstatus {
+	struct elf32_nt_prstatus elf32;
+	struct elf64_nt_prstatus elf64;
 };
 
 struct thread_info {
-	struct nt_prstatus* prstatus;
+	union nt_prstatus* prstatus;
 };
+
+struct elf_universal_header {
+	unsigned char e_ident[EI_NIDENT];	/* Magic number and other info */
+	/* Elf32_Half/Elf64_Half -> uint16_t */
+	uint16_t e_type;			/* Object file type */
+	/* Elf32_Half/Elf64_Half -> uint16_t */
+	uint16_t e_machine;		/* Architecture */
+	/* Elf32_Word/Elf64_Word ->  uint32_t */
+	uint32_t e_version;		/* Object file version */
+};
+
+union Elf_Ehdr {
+	Elf32_Ehdr elf32;
+	Elf64_Ehdr elf64;
+};
+
+union Elf_Phdr {
+	Elf32_Phdr elf32;
+	Elf64_Phdr elf64;
+};
+
+union Elf_Nhdr {
+	Elf32_Nhdr elf32;
+	Elf64_Nhdr elf64;
+};
+
+#define cprm_elf(_is64, _expr, _member) ({ \
+		__typeof__((_expr)) tmp = _expr; \
+		/* cast to the bigger type (Elf64) */ \
+		_is64 ? tmp->elf64._member : (__typeof__(tmp->elf64._member))tmp->elf32._member; \
+	})
 
 struct coredump_params {
 	int input_corefile;
 	int output_corefile;
 	size_t input_corefile_size;
 	const void* input_corefile_mapping;
-	const Elf64_Ehdr* input_header;
-	const Elf64_Phdr* input_program_headers;
-	const Elf64_Phdr* input_program_headers_end;
-	const Elf64_Nhdr* input_notes;
+	const struct elf_universal_header *universal_header;
+	const union Elf_Ehdr* input_header;
+	const union Elf_Phdr* input_program_headers;
+	const union Elf_Phdr* input_program_headers_end;
+	const union Elf_Nhdr* input_notes;
 	size_t input_notes_size;
 	struct vm_area* vm_areas;
 	size_t vm_area_count;
-	struct nt_file_header* nt_file;
+	union nt_file_header* nt_file;
 	const char** nt_file_filenames;
 	struct thread_info* thread_infos;
 	size_t thread_info_count;
@@ -92,6 +187,7 @@ struct coredump_params {
 	size_t prefix_length;
 	const char* main_executable_path;
 	size_t main_executable_path_length;
+	bool is_64_bit;
 };
 
 static char default_output_name[4096];
@@ -105,17 +201,29 @@ static uint64_t round_down_pow2(uint64_t number, uint64_t multiple) {
 	return (number) & -multiple;
 };
 
-static const char* note_name(const Elf64_Nhdr* note) {
-	return (const char*)note + sizeof(*note);
+static const char* note_name(const struct coredump_params* cprm, const union Elf_Nhdr* note) {
+	return (const char*)note + (cprm->is_64_bit ? sizeof(note->elf64) : sizeof(note->elf64));
 };
 
-static const void* note_data(const Elf64_Nhdr* note) {
-	return note_name(note) + round_up_pow2(note->n_namesz, 4);
+static const void* note_data(const struct coredump_params* cprm, const union Elf_Nhdr* note) {
+	return note_name(cprm, note) + round_up_pow2(cprm_elf(cprm->is_64_bit, note, n_namesz), 4);
 };
 
-static const Elf64_Nhdr* find_next_note(const Elf64_Nhdr* note) {
-	uint64_t length = sizeof(*note) + round_up_pow2(note->n_namesz, 4) + round_up_pow2(note->n_descsz, 4);
-	return (Elf64_Nhdr*)((char*)note + length);
+static const union Elf_Nhdr* find_next_note(const struct coredump_params* cprm, const union Elf_Nhdr* note) {
+	uint64_t length = sizeof(*note) + round_up_pow2(cprm_elf(cprm->is_64_bit, note, n_namesz), 4) + round_up_pow2(cprm_elf(cprm->is_64_bit, note, n_descsz), 4);
+	return (const union Elf_Nhdr*)((char*)note + length);
+};
+
+static size_t nt_file_entry_size(const struct coredump_params* cprm) {
+	return cprm->is_64_bit ? sizeof(struct elf64_nt_file_entry) : sizeof(struct elf32_nt_file_entry);
+};
+
+static size_t nt_file_header_size(const struct coredump_params* cprm) {
+	return cprm->is_64_bit ? sizeof(struct elf64_nt_file_header) : sizeof(struct elf32_nt_file_header);
+};
+
+static const union nt_file_entry* nt_file_get_entry(const struct coredump_params* cprm, const union nt_file_header* header, size_t index) {
+	return (const union nt_file_entry*)((const char*)header + nt_file_header_size(cprm) + (nt_file_entry_size(cprm) * index));
 };
 
 // first tries to open the file directly, then tries to open the file in the lower layer of the overlay
@@ -145,10 +253,14 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 
-	if (snprintf(default_output_name, sizeof(default_output_name), "darlingcore-%s", argv[1]) < 0) {
+	char *tmp_output_dirname = strdup(argv[1]);
+	char *tmp_output_basename = strdup(argv[1]);
+	if (snprintf(default_output_name, sizeof(default_output_name), "%s/darlingcore-%s", dirname(tmp_output_dirname), basename(tmp_output_basename)) < 0) {
 		perror("snprintf");
 		return 1;
 	}
+	free(tmp_output_dirname); tmp_output_dirname = NULL;
+	free(tmp_output_basename); tmp_output_basename = NULL;
 
 	const char* homedir = NULL;
 
@@ -194,39 +306,48 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 
-	cprm.input_header = cprm.input_corefile_mapping;
+	cprm.universal_header = cprm.input_corefile_mapping;
 
 	if (
-		cprm.input_header->e_ident[EI_MAG0] != ELFMAG0 ||
-		cprm.input_header->e_ident[EI_MAG1] != ELFMAG1 ||
-		cprm.input_header->e_ident[EI_MAG2] != ELFMAG2 ||
-		cprm.input_header->e_ident[EI_MAG3] != ELFMAG3 ||
-		cprm.input_header->e_ident[EI_CLASS] != ELFCLASS64 ||
-		cprm.input_header->e_ident[EI_VERSION] != EV_CURRENT ||
-		cprm.input_header->e_version != EV_CURRENT ||
-		cprm.input_header->e_type != ET_CORE
+		cprm.universal_header->e_ident[EI_MAG0] != ELFMAG0 ||
+		cprm.universal_header->e_ident[EI_MAG1] != ELFMAG1 ||
+		cprm.universal_header->e_ident[EI_MAG2] != ELFMAG2 ||
+		cprm.universal_header->e_ident[EI_MAG3] != ELFMAG3 ||
+		cprm.universal_header->e_ident[EI_VERSION] != EV_CURRENT ||
+		cprm.universal_header->e_version != EV_CURRENT ||
+		cprm.universal_header->e_type != ET_CORE
 	) {
 		fprintf(stderr, "Input file is not a valid corefile\n");
 		return 1;
 	}
 
-#if __x86_64__
-	if (cprm.input_header->e_machine != EM_X86_64) {
-		fprintf(stderr, "Input file is not a valid x86_64 corefile\n");
+	if (cprm.universal_header->e_ident[EI_CLASS] == ELFCLASS64) {
+		cprm.is_64_bit = true;
+	} else if (cprm.universal_header->e_ident[EI_CLASS] == ELFCLASS32) {
+		cprm.is_64_bit = false;
+	} else {
+		fprintf(stderr, "Input file is not a valid corefile (invalid ELF class)\n");
 		return 1;
 	}
-#else
-	#error Not implemented!
-#endif
 
-	cprm.input_program_headers = (const void*)((const char*)cprm.input_corefile_mapping + cprm.input_header->e_phoff);
-	cprm.input_program_headers_end = (const Elf64_Phdr*)((const char*)cprm.input_program_headers + (cprm.input_header->e_phentsize * cprm.input_header->e_phnum));
+	switch (cprm.universal_header->e_machine) {
+		case EM_X86_64:
+		case EM_386:
+			cprm.input_header = cprm.input_corefile_mapping;
+			break;
+		default:
+			fprintf(stderr, "Unexpected e_machine (%d) detected, aborting.\n", cprm.universal_header->e_machine);
+			return 1;
+	}
+
+	cprm.input_program_headers = (const void*)((const char*)cprm.input_corefile_mapping + cprm_elf(cprm.is_64_bit, cprm.input_header, e_phoff));
+	cprm.input_program_headers_end = (const void*)((const char*)cprm.input_program_headers + (cprm_elf(cprm.is_64_bit, cprm.input_header, e_phentsize) * cprm_elf(cprm.is_64_bit, cprm.input_header, e_phnum)));
 
 	// first, count how many VM areas we have
-	for (const Elf64_Phdr* program_header = cprm.input_program_headers; program_header < cprm.input_program_headers_end; program_header = (const Elf64_Phdr*)((const char*)program_header + cprm.input_header->e_phentsize)) {
-		if (program_header->p_type == PT_LOAD) {
+	for (const union Elf_Phdr* program_header = cprm.input_program_headers; program_header < cprm.input_program_headers_end; program_header = (const void*)((const char*)program_header + cprm_elf(cprm.is_64_bit, cprm.input_header, e_phentsize))) {
+		if (cprm_elf(cprm.is_64_bit, program_header, p_type) == PT_LOAD) {
 			++cprm.vm_area_count;
-		} else if (program_header->p_type == PT_NOTE) {
+		} else if (cprm_elf(cprm.is_64_bit, program_header, p_type) == PT_NOTE) {
 			// while we're at it, also load the NOTE segment
 
 			// XXX: ignoring it is probably not the best choice
@@ -235,8 +356,8 @@ int main(int argc, char** argv) {
 				continue;
 			}
 
-			cprm.input_notes = (const void*)((const char*)cprm.input_corefile_mapping + program_header->p_offset); 
-			cprm.input_notes_size = program_header->p_filesz;
+			cprm.input_notes = (const void*)((const char*)cprm.input_corefile_mapping + cprm_elf(cprm.is_64_bit, program_header, p_offset)); 
+			cprm.input_notes_size = cprm_elf(cprm.is_64_bit, program_header, p_filesz);
 		}
 	}
 
@@ -245,28 +366,28 @@ int main(int argc, char** argv) {
 		return 1;
 	}
 
-	for (const Elf64_Nhdr* note_header = cprm.input_notes; note_header < (const Elf64_Nhdr*)((const char*)cprm.input_notes + cprm.input_notes_size); note_header = find_next_note(note_header)) {
-		if (note_header->n_type == NT_FILE) {
+	for (const union Elf_Nhdr* note_header = cprm.input_notes; note_header < (const union Elf_Nhdr*)((const char*)cprm.input_notes + cprm.input_notes_size); note_header = find_next_note(&cprm, note_header)) {
+		if (cprm_elf(cprm.is_64_bit, note_header, n_type) == NT_FILE) {
 			// allocate a copy for alignment purposes
-			cprm.nt_file = malloc(note_header->n_descsz);
+			cprm.nt_file = malloc(cprm_elf(cprm.is_64_bit, note_header, n_descsz));
 			if (!cprm.nt_file) {
 				perror("malloc");
 				return 1;
 			}
-			memcpy(cprm.nt_file, note_data(note_header), note_header->n_descsz);
+			memcpy(cprm.nt_file, note_data(&cprm, note_header), cprm_elf(cprm.is_64_bit, note_header, n_descsz));
 
-			cprm.nt_file_filenames = malloc(cprm.nt_file->count * sizeof(const char*));
+			cprm.nt_file_filenames = malloc(cprm_elf(cprm.is_64_bit, cprm.nt_file, count) * sizeof(const char*));
 			if (!cprm.nt_file_filenames) {
 				perror("malloc");
 				return 1;
 			}
 
-			const char* filenames = (const char*)cprm.nt_file + sizeof(struct nt_file_header) + (sizeof(struct nt_file_entry) * cprm.nt_file->count);
-			for (size_t i = 0, offset = 0; i < cprm.nt_file->count; ++i) {
+			const char* filenames = (const char*)nt_file_get_entry(&cprm, cprm.nt_file, cprm_elf(cprm.is_64_bit, cprm.nt_file, count));
+			for (size_t i = 0, offset = 0; i < cprm_elf(cprm.is_64_bit, cprm.nt_file, count); ++i) {
 				cprm.nt_file_filenames[i] = &filenames[offset];
 				offset += strlen(&filenames[offset]) + 1;
 			}
-		} else if (note_header->n_type == NT_PRSTATUS) {
+		} else if (cprm_elf(cprm.is_64_bit, note_header, n_type) == NT_PRSTATUS) {
 			++cprm.thread_info_count;
 		} else {
 			continue;
@@ -285,16 +406,16 @@ int main(int argc, char** argv) {
 	}
 
 	size_t thread_info_index = 0;
-	for (const Elf64_Nhdr* note_header = cprm.input_notes; note_header < (const Elf64_Nhdr*)((const char*)cprm.input_notes + cprm.input_notes_size); note_header = find_next_note(note_header)) {
-		if (note_header->n_type == NT_PRSTATUS) {
+	for (const union Elf_Nhdr* note_header = cprm.input_notes; note_header < (const union Elf_Nhdr*)((const char*)cprm.input_notes + cprm.input_notes_size); note_header = find_next_note(&cprm, note_header)) {
+		if (cprm_elf(cprm.is_64_bit, note_header, n_type) == NT_PRSTATUS) {
 			// allocate a copy for alignment purposes
-			struct nt_prstatus* prstatus = malloc(note_header->n_descsz);
+			union nt_prstatus* prstatus = malloc(cprm_elf(cprm.is_64_bit, note_header, n_descsz));
 			if (!prstatus) {
 				perror("malloc");
 				return 1;
 			}
 			cprm.thread_infos[thread_info_index++].prstatus = prstatus;
-			memcpy(prstatus, note_data(note_header), note_header->n_descsz);
+			memcpy(prstatus, note_data(&cprm, note_header), cprm_elf(cprm.is_64_bit, note_header, n_descsz));
 		} else {
 			continue;
 		}
@@ -302,8 +423,8 @@ int main(int argc, char** argv) {
 
 	// determine if we have extra mappings in NT_FILE that aren't present in the program headers (gcore tends to do this)
 	// also try to determine which file is our main executable
-	for (size_t i = 0; i < cprm.nt_file->count; ++i) {
-		const struct nt_file_entry* entry = &((const struct nt_file_entry*)((const char*)cprm.nt_file + sizeof(struct nt_file_header)))[i];
+	for (size_t i = 0; i < cprm_elf(cprm.is_64_bit, cprm.nt_file, count); ++i) {
+		const union nt_file_entry* entry = nt_file_get_entry(&cprm, cprm.nt_file, i);
 		const char* filename = cprm.nt_file_filenames[i];
 		bool found = false;
 
@@ -328,12 +449,12 @@ int main(int argc, char** argv) {
 			}
 		}
 
-		for (const Elf64_Phdr* program_header = cprm.input_program_headers; program_header < cprm.input_program_headers_end; program_header = (const Elf64_Phdr*)((const char*)program_header + cprm.input_header->e_phentsize)) {
-			if (program_header->p_type != PT_LOAD) {
+		for (const union Elf_Phdr* program_header = cprm.input_program_headers; program_header < cprm.input_program_headers_end; program_header = (const union Elf_Phdr*)((const char*)program_header + cprm_elf(cprm.is_64_bit, cprm.input_header, e_phentsize))) {
+			if (cprm_elf(cprm.is_64_bit, program_header, p_type) != PT_LOAD) {
 				continue;
 			}
 		
-			if (entry->start == program_header->p_vaddr) {
+			if (cprm_elf(cprm.is_64_bit, entry, start) == cprm_elf(cprm.is_64_bit, program_header, p_vaddr)) {
 				found = true;
 				break;
 			}
@@ -359,14 +480,14 @@ int main(int argc, char** argv) {
 
 	// now load up the VM area array
 	size_t vm_area_index = 0;
-	for (const Elf64_Phdr* program_header = cprm.input_program_headers; program_header < cprm.input_program_headers_end; program_header = (const Elf64_Phdr*)((const char*)program_header + cprm.input_header->e_phentsize)) {
-		if (program_header->p_type == PT_LOAD) {
+	for (const union Elf_Phdr* program_header = cprm.input_program_headers; program_header < cprm.input_program_headers_end; program_header = (const union Elf_Phdr*)((const char*)program_header + cprm_elf(cprm.is_64_bit, cprm.input_header, e_phentsize))) {
+		if (cprm_elf(cprm.is_64_bit, program_header, p_type) == PT_LOAD) {
 			struct vm_area* vm_area = &cprm.vm_areas[vm_area_index++];
 
 			vm_area->valid = true;
-			vm_area->memory_address = program_header->p_vaddr;
-			vm_area->memory_size = program_header->p_memsz;
-			vm_area->file_offset = program_header->p_offset;
+			vm_area->memory_address = cprm_elf(cprm.is_64_bit, program_header, p_vaddr);
+			vm_area->memory_size = cprm_elf(cprm.is_64_bit, program_header, p_memsz);
+			vm_area->file_offset = cprm_elf(cprm.is_64_bit, program_header, p_offset);
 
 			if (!cprm.main_executable_path && vm_area->memory_address == 0) {
 				// if this is PAGEZERO and we don't yet have a main executable registered,
@@ -377,36 +498,35 @@ int main(int argc, char** argv) {
 			}
 
 			vm_area->protection = 0;
-			if (program_header->p_flags & PF_R) {
+			if (cprm_elf(cprm.is_64_bit, program_header, p_flags) & PF_R) {
 				vm_area->protection |= PROT_READ;
 			}
-			if (program_header->p_flags & PF_W) {
+			if (cprm_elf(cprm.is_64_bit, program_header, p_flags) & PF_W) {
 				vm_area->protection |= PROT_WRITE;
 			}
-			if (program_header->p_flags & PF_X) {
+			if (cprm_elf(cprm.is_64_bit, program_header, p_flags) & PF_X) {
 				vm_area->protection |= PROT_EXEC;
 			}
 
-			if (program_header->p_filesz == 0) {
+			if (cprm_elf(cprm.is_64_bit, program_header, p_filesz) == 0) {
 				// contents contained within original file
 
 				// in this case, the file size *should* be the same as the size in memory
 				vm_area->file_size = vm_area->memory_size;
 
 				// let's look for the NT_FILE entry
-				const struct nt_file_entry* entries = (const struct nt_file_entry*)((const char*)cprm.nt_file + sizeof(struct nt_file_header));
-				for (size_t i = 0; i < cprm.nt_file->count; ++i) {
-					const struct nt_file_entry* entry = &entries[i];
+				for (size_t i = 0; i < cprm_elf(cprm.is_64_bit, cprm.nt_file, count); ++i) {
+					const union nt_file_entry* entry = nt_file_get_entry(&cprm, cprm.nt_file, i);
 					const char* filename = cprm.nt_file_filenames[i];
 
-					if (entry->start > vm_area->memory_address || entry->end < vm_area->memory_address + vm_area->memory_size) {
+					if (cprm_elf(cprm.is_64_bit, entry, start) > vm_area->memory_address || cprm_elf(cprm.is_64_bit, entry, end) < vm_area->memory_address + vm_area->memory_size) {
 						continue;
 					}
 
 					vm_area->filename = filename;
 					vm_area->filename_length = strlen(vm_area->filename);
-					vm_area->file_offset = (entry->offset * cprm.nt_file->page_size) + (vm_area->memory_address - entry->start);
-					vm_area->file_size = entry->end - entry->start;
+					vm_area->file_offset = (cprm_elf(cprm.is_64_bit, entry, offset) * cprm_elf(cprm.is_64_bit, cprm.nt_file, page_size)) + (vm_area->memory_address - cprm_elf(cprm.is_64_bit, entry, start));
+					vm_area->file_size = cprm_elf(cprm.is_64_bit, entry, end) - cprm_elf(cprm.is_64_bit, entry, start);
 
 					break;
 				}
@@ -429,23 +549,23 @@ int main(int argc, char** argv) {
 				// contents contained within this corefile
 				vm_area->filename = NULL;
 				vm_area->filename_length = 0;
-				vm_area->file_size = program_header->p_filesz;
+				vm_area->file_size = cprm_elf(cprm.is_64_bit, program_header, p_filesz);
 			}
 		}
 	}
 
 	// load in extra mappings from NT_FILE
-	for (size_t i = 0; i < cprm.nt_file->count; ++i) {
-		const struct nt_file_entry* entry = &((const struct nt_file_entry*)((const char*)cprm.nt_file + sizeof(struct nt_file_header)))[i];
+	for (size_t i = 0; i < cprm_elf(cprm.is_64_bit, cprm.nt_file, count); ++i) {
+		const union nt_file_entry* entry = nt_file_get_entry(&cprm, cprm.nt_file, i);
 		const char* filename = cprm.nt_file_filenames[i];
 		bool found = false;
 
-		for (const Elf64_Phdr* program_header = cprm.input_program_headers; program_header < cprm.input_program_headers_end; program_header = (const Elf64_Phdr*)((const char*)program_header + cprm.input_header->e_phentsize)) {
-			if (program_header->p_type != PT_LOAD) {
+		for (const union Elf_Phdr* program_header = cprm.input_program_headers; program_header < cprm.input_program_headers_end; program_header = (const union Elf_Phdr*)((const char*)program_header + cprm_elf(cprm.is_64_bit, cprm.input_header, e_phentsize))) {
+			if (cprm_elf(cprm.is_64_bit, program_header, p_type) != PT_LOAD) {
 				continue;
 			}
 		
-			if (entry->start == program_header->p_vaddr) {
+			if (cprm_elf(cprm.is_64_bit, entry, start) == cprm_elf(cprm.is_64_bit, program_header, p_vaddr)) {
 				found = true;
 				break;
 			}
@@ -459,10 +579,10 @@ int main(int argc, char** argv) {
 
 		vm_area->filename = filename;
 		vm_area->filename_length = strlen(vm_area->filename);
-		vm_area->memory_address = entry->start;
-		vm_area->memory_size = entry->end - entry->start;
+		vm_area->memory_address = cprm_elf(cprm.is_64_bit, entry, start);
+		vm_area->memory_size = cprm_elf(cprm.is_64_bit, entry, end) - cprm_elf(cprm.is_64_bit, entry, start);
 		vm_area->file_size = vm_area->memory_size;
-		vm_area->file_offset = entry->offset * cprm.nt_file->page_size;
+		vm_area->file_offset = cprm_elf(cprm.is_64_bit, entry, offset) * cprm_elf(cprm.is_64_bit, cprm.nt_file, page_size);
 		vm_area->protection = VM_PROT_READ;
 		vm_area->valid = true;
 
@@ -527,8 +647,22 @@ struct thread_flavor
 static
 void fill_thread_state32(x86_thread_state32_t* state, const struct thread_info* info)
 {
-	// TODO
-	memset(state, 0, sizeof(*state));
+	state->eax    = info->prstatus->elf32.general_registers.i386.eax;
+	state->ebx    = info->prstatus->elf32.general_registers.i386.ebx;
+	state->ecx    = info->prstatus->elf32.general_registers.i386.ecx;
+	state->edx    = info->prstatus->elf32.general_registers.i386.edx;
+	state->edi    = info->prstatus->elf32.general_registers.i386.edi;
+	state->esi    = info->prstatus->elf32.general_registers.i386.esi;
+	state->ebp    = info->prstatus->elf32.general_registers.i386.ebp;
+	state->esp    = info->prstatus->elf32.general_registers.i386.esp;
+	state->ss     = info->prstatus->elf32.general_registers.i386.ss;
+	state->eflags = info->prstatus->elf32.general_registers.i386.eflags;
+	state->eip    = info->prstatus->elf32.general_registers.i386.eip;
+	state->cs     = info->prstatus->elf32.general_registers.i386.cs;
+	state->ds     = info->prstatus->elf32.general_registers.i386.ds;
+	state->es     = info->prstatus->elf32.general_registers.i386.es;
+	state->fs     = info->prstatus->elf32.general_registers.i386.fs;
+	state->gs     = info->prstatus->elf32.general_registers.i386.gs;
 }
 
 static
@@ -541,27 +675,27 @@ void fill_float_state32(x86_float_state32_t* state, const struct thread_info* in
 static
 void fill_thread_state64(x86_thread_state64_t* state, const struct thread_info* info)
 {
-	state->rax    = info->prstatus->general_registers.ax;
-	state->rbx    = info->prstatus->general_registers.bx;
-	state->rcx    = info->prstatus->general_registers.cx;
-	state->rdx    = info->prstatus->general_registers.dx;
-	state->rdi    = info->prstatus->general_registers.di;
-	state->rsi    = info->prstatus->general_registers.si;
-	state->rbp    = info->prstatus->general_registers.bp;
-	state->rsp    = info->prstatus->general_registers.sp;
-	state->r8     = info->prstatus->general_registers.r8;
-	state->r9     = info->prstatus->general_registers.r9;
-	state->r10    = info->prstatus->general_registers.r10;
-	state->r11    = info->prstatus->general_registers.r11;
-	state->r12    = info->prstatus->general_registers.r12;
-	state->r13    = info->prstatus->general_registers.r13;
-	state->r14    = info->prstatus->general_registers.r14;
-	state->r15    = info->prstatus->general_registers.r15;
-	state->rip    = info->prstatus->general_registers.ip;
-	state->rflags = info->prstatus->general_registers.flags;
-	state->cs     = info->prstatus->general_registers.cs;
-	state->fs     = info->prstatus->general_registers.fs;
-	state->gs     = info->prstatus->general_registers.gs;
+	state->rax    = info->prstatus->elf64.general_registers.x86_64.ax;
+	state->rbx    = info->prstatus->elf64.general_registers.x86_64.bx;
+	state->rcx    = info->prstatus->elf64.general_registers.x86_64.cx;
+	state->rdx    = info->prstatus->elf64.general_registers.x86_64.dx;
+	state->rdi    = info->prstatus->elf64.general_registers.x86_64.di;
+	state->rsi    = info->prstatus->elf64.general_registers.x86_64.si;
+	state->rbp    = info->prstatus->elf64.general_registers.x86_64.bp;
+	state->rsp    = info->prstatus->elf64.general_registers.x86_64.sp;
+	state->r8     = info->prstatus->elf64.general_registers.x86_64.r8;
+	state->r9     = info->prstatus->elf64.general_registers.x86_64.r9;
+	state->r10    = info->prstatus->elf64.general_registers.x86_64.r10;
+	state->r11    = info->prstatus->elf64.general_registers.x86_64.r11;
+	state->r12    = info->prstatus->elf64.general_registers.x86_64.r12;
+	state->r13    = info->prstatus->elf64.general_registers.x86_64.r13;
+	state->r14    = info->prstatus->elf64.general_registers.x86_64.r14;
+	state->r15    = info->prstatus->elf64.general_registers.x86_64.r15;
+	state->rip    = info->prstatus->elf64.general_registers.x86_64.ip;
+	state->rflags = info->prstatus->elf64.general_registers.x86_64.flags;
+	state->cs     = info->prstatus->elf64.general_registers.x86_64.cs;
+	state->fs     = info->prstatus->elf64.general_registers.x86_64.fs;
+	state->gs     = info->prstatus->elf64.general_registers.x86_64.gs;
 }
 
 static
@@ -577,6 +711,7 @@ bool macho_dump_headers32(struct coredump_params* cprm)
 	// Count memory segments and threads
 	unsigned int segs = cprm->vm_area_count;
 	unsigned int threads = cprm->thread_info_count;
+	struct mach_header mh;
 
 	for (size_t i = 0; i < cprm->vm_area_count; ++i) {
 		struct vm_area* vma = &cprm->vm_areas[i];
@@ -587,21 +722,32 @@ bool macho_dump_headers32(struct coredump_params* cprm)
 		}
 	}
 
-	struct mach_header mh;
-
 	mh.magic = MH_MAGIC;
 #ifdef __x86_64__
 	mh.cputype = CPU_TYPE_X86;
 	mh.cpusubtype = CPU_SUBTYPE_X86_ALL;
 #else
-	#error Missing code for this arch
+#warning Missing code for this arch
 #endif
 	mh.filetype = MH_CORE;
 	mh.ncmds = segs + threads;
 
 	const int statesize = sizeof(x86_thread_state32_t) + sizeof(x86_float_state32_t) + sizeof(struct thread_flavor) * 2;
-
 	mh.sizeofcmds = segs * sizeof(struct segment_command) + threads * (sizeof(struct thread_command) + statesize);
+	mh.flags = 0;
+
+	if (cprm->main_executable_path) {
+		int tmpfd = open_file(cprm, cprm->main_executable_path, cprm->main_executable_path_length);
+		if (tmpfd >= 0) {
+			struct mach_header that_mh;
+			if (read(tmpfd, &that_mh, sizeof(that_mh)) == sizeof(that_mh)) {
+				mh.flags = that_mh.flags;
+			}
+			close(tmpfd);
+		}
+	} else {
+		fprintf(stderr, "No main executable detected?\n");
+	}
 
 	if (!dump_emit(cprm, &mh, sizeof(mh)))
 		goto fail;
@@ -611,7 +757,7 @@ bool macho_dump_headers32(struct coredump_params* cprm)
 	// TODO: maybe align the initial offset to 0x1000
 
 	for (size_t i = 0; i < cprm->vm_area_count; ++i) {
-		const struct vm_area* vma = &cprm->vm_areas[i];
+		struct vm_area* vma = &cprm->vm_areas[i];
 		struct segment_command sc;
 
 		if (!vma->valid) {
@@ -627,6 +773,8 @@ bool macho_dump_headers32(struct coredump_params* cprm)
 		sc.vmaddr = vma->memory_address;
 		sc.vmsize = vma->memory_size;
 		sc.fileoff = file_offset;
+
+		vma->expected_offset = sc.fileoff;
 
 		sc.filesize = (vma->file_size == 0) ? vma->memory_size : vma->file_size;
 		sc.initprot = 0;
@@ -663,7 +811,7 @@ bool macho_dump_headers32(struct coredump_params* cprm)
 		fill_thread_state32((x86_thread_state32_t*)tf->state, thread_info);
 
 		// Float registers
-		tf = (struct thread_flavor*) (((char*) tf) + sizeof(x86_thread_state32_t));
+		tf = (struct thread_flavor*) (tf->state + sizeof(x86_thread_state32_t));
 		tf->flavor = x86_FLOAT_STATE32;
 		tf->count = x86_FLOAT_STATE32_COUNT;
 
@@ -730,7 +878,6 @@ bool macho_dump_headers64(struct coredump_params* cprm)
 	if (!dump_emit(cprm, &mh, sizeof(mh)))
 		goto fail;
 
-	struct vm_area_struct* vma;
 	uint64_t file_offset = mh.sizeofcmds + sizeof(mh);
 
 	for (size_t i = 0; i < cprm->vm_area_count; ++i) {
@@ -809,17 +956,14 @@ fail:
 
 void macho_coredump(struct coredump_params* cprm)
 {
-#warning TODO: 32-bit coredump support
-#if TODO
 	// Write the Mach-O header and loader commands
-	if (!check_64bit_mode(current_pt_regs()))
+	if (!cprm->is_64_bit)
 	{
 		// 32-bit executables
 		if (!macho_dump_headers32(cprm))
 			exit(EXIT_FAILURE);
 	}
 	else
-#endif
 	{
 		// 64-bit executables
 		if (!macho_dump_headers64(cprm))
