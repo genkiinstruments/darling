@@ -29,24 +29,6 @@ static void initme(void) {
     verbose = getenv("STUB_VERBOSE") != NULL;
 }
 
-void* MIDIClientCreate(void)
-{
-    if (verbose) puts("STUB: MIDIClientCreate called");
-    return NULL;
-}
-
-void* MIDIClientCreateWithBlock(void)
-{
-    if (verbose) puts("STUB: MIDIClientCreateWithBlock called");
-    return NULL;
-}
-
-void* MIDIClientDispose(void)
-{
-    if (verbose) puts("STUB: MIDIClientDispose called");
-    return NULL;
-}
-
 void* MIDIConfigCheckVirginState(void)
 {
     if (verbose) puts("STUB: MIDIConfigCheckVirginState called");
@@ -173,12 +155,6 @@ void* MIDIDeviceListDispose(void)
     return NULL;
 }
 
-void* MIDIDeviceListGetDevice(void)
-{
-    if (verbose) puts("STUB: MIDIDeviceListGetDevice called");
-    return NULL;
-}
-
 void* MIDIDeviceListGetNumberOfDevices(void)
 {
     if (verbose) puts("STUB: MIDIDeviceListGetNumberOfDevices called");
@@ -203,12 +179,6 @@ void* MIDIEndpointDispose(void)
     return NULL;
 }
 
-void* MIDIEndpointGetEntity(void)
-{
-    if (verbose) puts("STUB: MIDIEndpointGetEntity called");
-    return NULL;
-}
-
 void* MIDIEndpointGetRefCons(void)
 {
     if (verbose) puts("STUB: MIDIEndpointGetRefCons called");
@@ -230,12 +200,6 @@ void* MIDIEntityAddOrRemoveEndpoints(void)
 void* MIDIEntityGetDestination(void)
 {
     if (verbose) puts("STUB: MIDIEntityGetDestination called");
-    return NULL;
-}
-
-void* MIDIEntityGetDevice(void)
-{
-    if (verbose) puts("STUB: MIDIEntityGetDevice called");
     return NULL;
 }
 
@@ -275,12 +239,6 @@ void* MIDIGet32BitOnlyDrivers(void)
     return NULL;
 }
 
-void* MIDIGetDestination(void)
-{
-    if (verbose) puts("STUB: MIDIGetDestination called");
-    return NULL;
-}
-
 void* MIDIGetDevice(void)
 {
     if (verbose) puts("STUB: MIDIGetDevice called");
@@ -305,12 +263,6 @@ void* MIDIGetExternalDevice(void)
     return NULL;
 }
 
-void* MIDIGetNumberOfDestinations(void)
-{
-    if (verbose) puts("STUB: MIDIGetNumberOfDestinations called");
-    return NULL;
-}
-
 void* MIDIGetNumberOfDevices(void)
 {
     if (verbose) puts("STUB: MIDIGetNumberOfDevices called");
@@ -320,12 +272,6 @@ void* MIDIGetNumberOfDevices(void)
 void* MIDIGetNumberOfExternalDevices(void)
 {
     if (verbose) puts("STUB: MIDIGetNumberOfExternalDevices called");
-    return NULL;
-}
-
-void* MIDIGetNumberOfSources(void)
-{
-    if (verbose) puts("STUB: MIDIGetNumberOfSources called");
     return NULL;
 }
 
@@ -341,18 +287,6 @@ void* MIDIGetSerialPortOwner(void)
     return NULL;
 }
 
-void* MIDIGetSource(void)
-{
-    if (verbose) puts("STUB: MIDIGetSource called");
-    return NULL;
-}
-
-void* MIDIInputPortCreate(void)
-{
-    if (verbose) puts("STUB: MIDIInputPortCreate called");
-    return NULL;
-}
-
 void* MIDIInputPortCreateWithBlock(void)
 {
     if (verbose) puts("STUB: MIDIInputPortCreateWithBlock called");
@@ -365,33 +299,15 @@ void* MIDIObjectFindByUniqueID(void)
     return NULL;
 }
 
-void* MIDIObjectGetDataProperty(void)
-{
-    if (verbose) puts("STUB: MIDIObjectGetDataProperty called");
-    return NULL;
-}
-
 void* MIDIObjectGetDictionaryProperty(void)
 {
     if (verbose) puts("STUB: MIDIObjectGetDictionaryProperty called");
     return NULL;
 }
 
-void* MIDIObjectGetIntegerProperty(void)
-{
-    if (verbose) puts("STUB: MIDIObjectGetIntegerProperty called");
-    return NULL;
-}
-
 void* MIDIObjectGetProperties(void)
 {
     if (verbose) puts("STUB: MIDIObjectGetProperties called");
-    return NULL;
-}
-
-void* MIDIObjectGetStringProperty(void)
-{
-    if (verbose) puts("STUB: MIDIObjectGetStringProperty called");
     return NULL;
 }
 
@@ -440,12 +356,6 @@ void* MIDIPacketListAdd(void)
 void* MIDIPacketListInit(void)
 {
     if (verbose) puts("STUB: MIDIPacketListInit called");
-    return NULL;
-}
-
-void* MIDIPortConnectSource(void)
-{
-    if (verbose) puts("STUB: MIDIPortConnectSource called");
     return NULL;
 }
 
