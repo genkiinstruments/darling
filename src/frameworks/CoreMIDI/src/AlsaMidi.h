@@ -115,23 +115,14 @@ struct MidiDevice : public MidiObject
 
 struct MidiPort : public MidiObject
 {
-    MidiPort(const MidiClient& cl, bool isInput, std::string_view name, MIDIReadProc readProc, void* refCon);
+    MidiPort(MidiClient& cl, bool isInput, std::string_view name, MIDIReadProc readProc, void* refCon);
 
     ~MidiPort() override;
 
-    OSStatus connectSource(MidiEndpoint& endpoint, void* connRefCon);
-
-    static void* thread_entry(void* arg) { return static_cast<MidiPort*>(arg)->run(); }
-    void* run();
-
-    const MidiClient& client;
-    const std::string name;
-    int               portId   = -1;
-    MIDIReadProc      readProc = nullptr;
-    void* refCon     = nullptr;
-    void* connRefCon = nullptr;
-    std::atomic_bool thread_should_exit = false;
-    pthread_t        thread_handle      = nullptr;
+    MidiClient& client;
+    int          portId   = -1;
+    MIDIReadProc readProc = nullptr;
+    void* refCon = nullptr;
 };
 
 /* A client object derives from MIDIObjectRef. It doesn’t have an owning object. */
@@ -143,9 +134,30 @@ struct MidiClient : MidiObject
 
     OSStatus createPort(bool isInput, std::string_view name, MIDIReadProc readProc, void* refCon, MIDIPortRef* outPort);
 
+    OSStatus disposePort(MidiPort& port);
+
+    OSStatus connect(MidiPort& port, MidiEndpoint& source, void* connRefCon);
+
+    OSStatus disconnect(MidiPort& port, MidiEndpoint& source);
+
+    static void* thread_entry(void* arg) { return static_cast<MidiClient*>(arg)->run(); }
+    void* run();
+
+    struct Connection
+    {
+        MidiPort    * port;
+        MidiEndpoint* source;
+        void        * refCon;
+    };
+
+    std::vector<Connection> connections;
+    std::atomic_bool        thread_should_exit = false;
+    pthread_t               thread_handle      = nullptr;
+
     snd_seq_t* handle = nullptr;
     MIDINotifyProc proc = nullptr;
     void* notifyRefCon = nullptr;
+    int clientId = -1;
 
     std::vector<std::unique_ptr<MidiPort>> ports;
 };
@@ -175,8 +187,8 @@ private:
 
     void enumerate();
 
-    std::map<int, std::unique_ptr<MidiDevice>> devices;
-    std::vector<std::unique_ptr<MidiClient>>   clients;
+    std::map<std::string, std::unique_ptr<MidiDevice>> devices;
+    std::vector<std::unique_ptr<MidiClient>>           clients;
 };
 
 #endif //DARLING_ALSAMIDI_H
