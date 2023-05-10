@@ -102,8 +102,31 @@ OSStatus MIDIPortConnectSource(MIDIPortRef portRef, MIDIEndpointRef sourceRef, v
     {
         if (auto* endp = MidiObject::get<MidiEndpoint>(sourceRef); endp != nullptr)
         {
-            return port->connectSource(*endp, connRefCon);
+            return port->client.connect(*port, *endp, connRefCon);
         }
+    }
+
+    return kMIDIObjectNotFound;
+}
+
+OSStatus MIDIPortDisconnectSource(MIDIPortRef portRef, MIDIEndpointRef sourceRef)
+{
+    if (auto* port = MidiObject::get<MidiPort>(portRef); port != nullptr)
+    {
+        if (auto* endp = MidiObject::get<MidiEndpoint>(sourceRef); endp != nullptr)
+        {
+            return port->client.disconnect(*port, *endp);
+        }
+    }
+
+    return kMIDIObjectNotFound;
+}
+
+OSStatus MIDIPortDispose(MIDIPortRef portRef)
+{
+    if (auto* port = MidiObject::get<MidiPort>(portRef); port != nullptr)
+    {
+        return port->client.disposePort(*port);
     }
 
     return kMIDIObjectNotFound;

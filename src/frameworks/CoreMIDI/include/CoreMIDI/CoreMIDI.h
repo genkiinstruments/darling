@@ -86,8 +86,6 @@ void* MIDIObjectSetStringProperty(void);
 void* MIDIOutputPortCreate(void);
 void* MIDIPacketListAdd(void);
 void* MIDIPacketListInit(void);
-void* MIDIPortDisconnectSource(void);
-void* MIDIPortDispose(void);
 void* MIDIReceived(void);
 void* MIDIRestart(void);
 void* MIDISend(void);

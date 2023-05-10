@@ -359,18 +359,6 @@ void* MIDIPacketListInit(void)
     return NULL;
 }
 
-void* MIDIPortDisconnectSource(void)
-{
-    if (verbose) puts("STUB: MIDIPortDisconnectSource called");
-    return NULL;
-}
-
-void* MIDIPortDispose(void)
-{
-    if (verbose) puts("STUB: MIDIPortDispose called");
-    return NULL;
-}
-
 void* MIDIReceived(void)
 {
     if (verbose) puts("STUB: MIDIReceived called");

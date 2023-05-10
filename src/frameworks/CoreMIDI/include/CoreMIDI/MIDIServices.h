@@ -99,5 +99,7 @@ COREMIDI_EXPORT OSStatus MIDIObjectGetIntegerProperty(MIDIObjectRef obj, CFStrin
 COREMIDI_EXPORT OSStatus MIDIEntityGetDevice(MIDIEntityRef inEntity, MIDIDeviceRef* outDevice);
 COREMIDI_EXPORT OSStatus MIDIInputPortCreate(MIDIClientRef client, CFStringRef portName, MIDIReadProc readProc, void* refCon, MIDIPortRef* outPort);
 COREMIDI_EXPORT OSStatus MIDIPortConnectSource(MIDIPortRef port, MIDIEndpointRef source, void *connRefCon);
+COREMIDI_EXPORT OSStatus MIDIPortDisconnectSource(MIDIPortRef port, MIDIEndpointRef source);
+COREMIDI_EXPORT OSStatus MIDIPortDispose(MIDIPortRef port);
 
 #endif // __MIDIServices_h__
