@@ -20,7 +20,7 @@ wrap_elf(swresample libswresample.so)
 wrap_elf(avcodec libavcodec.so)
 wrap_elf(avformat libavformat.so)
 wrap_elf(avutil libavutil.so)
-#wrap_elf(asound libasound.so)
+wrap_elf(asound libasound.so)
 wrap_elf(pulse libpulse.so)
 
 set(FRAMEWORK_AUDIOTOOLBOX_VERSION "A")

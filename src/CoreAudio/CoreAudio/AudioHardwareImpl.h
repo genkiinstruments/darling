@@ -25,6 +25,16 @@ along with Darling.  If not, see <http://www.gnu.org/licenses/>.
 #include <mutex>
 #include "AudioHardwareStream.h"
 
+inline std::string multichar_to_string(int e)
+{
+    const auto get_char = [&](size_t pos) { return (e >> (pos * 8)) & 0xFF; };
+
+    std::string s = "    ";
+    snprintf(s.data(), s.size() + 1, "%c%c%c%c", get_char(3), get_char(2), get_char(1), get_char(0));
+
+    return s;
+}
+
 class AudioHardwareImpl
 {
 public:

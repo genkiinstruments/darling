@@ -117,6 +117,8 @@ OSStatus AudioHardwareImpl::stop(AudioDeviceIOProcID inProcID)
 
 bool AudioHardwareImpl::hasProperty(const AudioObjectPropertyAddress* address)
 {
+    printf("AudioHardwareImpl::hasProperty %s\n", multichar_to_string(address->mSelector).c_str());
+
 	UInt32 ds;
 	OSStatus status = getPropertyDataSize(address, 0, nullptr, &ds);
 	return status != kAudioHardwareUnknownPropertyError;
@@ -125,11 +127,14 @@ bool AudioHardwareImpl::hasProperty(const AudioObjectPropertyAddress* address)
 OSStatus AudioHardwareImpl::getPropertyDataSize(const AudioObjectPropertyAddress* inAddress, UInt32 inQualifierDataSize,
 		const void* inQualifierData, UInt32* outDataSize)
 {
+    printf("AudioHardwareImpl::getPropertyDataSize %s\n", multichar_to_string(inAddress->mSelector).c_str());
 	return getPropertyData(inAddress, inQualifierDataSize, inQualifierData, outDataSize, nullptr);
 }
 
 OSStatus AudioHardwareImpl::isPropertySettable(const AudioObjectPropertyAddress* inAddress, Boolean* outIsSettable)
 {
+    printf("AudioHardwareImpl::isPropertySettable %s\n", multichar_to_string(inAddress->mSelector).c_str());
+
 	switch (inAddress->mSelector)
 	{
 		case kAudioDevicePropertyVolumeScalar:
@@ -149,7 +154,9 @@ OSStatus AudioHardwareImpl::isPropertySettable(const AudioObjectPropertyAddress*
 OSStatus AudioHardwareImpl::getPropertyData(const AudioObjectPropertyAddress* inAddress, UInt32 inQualifierDataSize,
 	const void* inQualifierData, UInt32* ioDataSize, void* outData)
 {
-	switch (inAddress->mSelector)
+    printf("AudioHardwareImpl::getPropertyData %s\n", multichar_to_string(inAddress->mSelector).c_str());
+
+    switch (inAddress->mSelector)
 	{
 		case kAudioDevicePropertyStreamFormat: // returns AudioStreamBasicDescription
 		{
@@ -253,6 +260,8 @@ OSStatus AudioHardwareImpl::getPropertyString(CFStringRef str, UInt32* ioDataSiz
 OSStatus AudioHardwareImpl::setPropertyData(const AudioObjectPropertyAddress* inAddress, UInt32 inQualifierDataSize,
 	const void* inQualifierData, UInt32 inDataSize, const void* inData)
 {
+    printf("AudioHardwareImpl::setPropertyDataSize %s\n", multichar_to_string(inAddress->mSelector).c_str());
+
 	switch (inAddress->mSelector)
 	{
 		case kAudioDevicePropertyBufferSize:

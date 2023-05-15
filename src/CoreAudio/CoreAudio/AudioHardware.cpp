@@ -19,6 +19,9 @@ along with Darling.  If not, see <http://www.gnu.org/licenses/>.
 
 #include <CoreAudio/AudioHardware.h>
 #include "AudioHardwareImpl.h"
+#include "alsa/AudioHardwareImplALSA.h"
+#include "alsa/AudioHardwareImplALSAOutput.h"
+#include "alsa/AudioHardwareImplALSAInput.h"
 #include "pulse/AudioHardwareImplPA.h"
 #include "pulse/AudioHardwareImplPAOutput.h"
 #include "pulse/AudioHardwareImplPAInput.h"
@@ -35,10 +38,14 @@ static void initObjects()
 	static dispatch_once_t once;
 	dispatch_once(&once, ^{
 		// TODO: Or ALSA
-		g_objects.insert(std::make_pair(kAudioObjectSystemObject, std::make_unique<AudioHardwareImplPA>(kAudioObjectSystemObject)));
-		g_objects.insert(std::make_pair(kAudioObjectSystemObject + 1, std::make_unique<AudioHardwareImplPAOutput>(kAudioObjectSystemObject + 1)));
-		g_objects.insert(std::make_pair(kAudioObjectSystemObject + 2, std::make_unique<AudioHardwareImplPAInput>(kAudioObjectSystemObject + 2)));
-		g_objects.insert(std::make_pair(kAudioObjectSystemObject + 1, std::make_unique<AudioHardwareImplPAOutput>(kAudioObjectSystemObject + 3, "event")));
+//		g_objects.insert(std::make_pair(kAudioObjectSystemObject, std::make_unique<AudioHardwareImplPA>(kAudioObjectSystemObject)));
+//		g_objects.insert(std::make_pair(kAudioObjectSystemObject + 1, std::make_unique<AudioHardwareImplPAOutput>(kAudioObjectSystemObject + 1)));
+//		g_objects.insert(std::make_pair(kAudioObjectSystemObject + 2, std::make_unique<AudioHardwareImplPAInput>(kAudioObjectSystemObject + 2)));
+//		g_objects.insert(std::make_pair(kAudioObjectSystemObject + 1, std::make_unique<AudioHardwareImplPAOutput>(kAudioObjectSystemObject + 3, "event")));
+
+		g_objects.insert(std::make_pair(kAudioObjectSystemObject, std::make_unique<AudioHardwareImplALSA>(kAudioObjectSystemObject)));
+        g_objects.insert(std::make_pair(kAudioObjectSystemObject + 1, std::make_unique<AudioHardwareImplALSAOutput>(kAudioObjectSystemObject + 1)));
+        g_objects.insert(std::make_pair(kAudioObjectSystemObject + 2, std::make_unique<AudioHardwareImplALSAInput>(kAudioObjectSystemObject + 2)));
 	});
 }
 
