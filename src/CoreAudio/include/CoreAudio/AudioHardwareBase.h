@@ -84,6 +84,9 @@ enum
     kAudioDevicePropertyIsHidden                        = 'hidn',
     kAudioDevicePropertyPreferredChannelsForStereo      = 'dch2',
     kAudioDevicePropertyPreferredChannelLayout          = 'srnd',
+    kAudioDevicePropertyDataSource                      = 'ssrc',
+    kAudioDevicePropertyDataSources                     = 'ssc#',
+
 };
 
 
