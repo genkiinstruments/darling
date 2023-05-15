@@ -1,4 +1,4 @@
-project(CoreMIDI)
+project(CoreMIDI LANGUAGES C CXX)
 
 remove_sdk_framework(CoreMIDI)
 
@@ -6,6 +6,8 @@ set(DYLIB_COMPAT_VERSION "1.0.0")
 set(DYLIB_CURRENT_VERSION "69.0.0")
 
 set(FRAMEWORK_VERSION "A")
+
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++17 -stdlib=libc++")
 
 generate_sdk_framework(CoreMIDI
     VERSION ${FRAMEWORK_VERSION}
@@ -26,10 +28,13 @@ add_framework(CoreMIDI
         src/MIDINetworkSession.m
         src/MIDINetworkHost.m
         src/MIDINetworkConnection.m
-        src/MIDIServices.m
+        src/MIDIServices.mm
+        src/AlsaMidi.cpp
 
     DEPENDENCIES
         system
         objc
         Foundation
+        asound
+        cxx
 )
