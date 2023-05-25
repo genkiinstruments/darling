@@ -11,6 +11,11 @@ extern "C" {
 
 typedef SInt32 UnicodeMapVersion;
 
+enum {
+    kUnicodeUseLatestMapping = -1,
+    kUnicodeUseHFSPlusMapping = 4,
+};
+
 struct UnicodeMapping {
     TextEncoding        unicodeEncoding;
     TextEncoding        otherEncoding;
