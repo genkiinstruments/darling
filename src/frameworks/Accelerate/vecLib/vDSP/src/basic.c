@@ -22,21 +22,27 @@
 void vDSP_vsadd(const float *__A, vDSP_Stride __IA, const float *__B, float *__C, vDSP_Stride __IC, vDSP_Length __N)
 {
     #pragma clang loop vectorize(enable)
-    for (vDSP_Length i = 0; i < __N; i++)
-        __C[i * __IC] = __A[i * __IA] + __B[0];
+    for (vDSP_Length n = 0; n < __N; n++)
+        __C[n * __IC] = __A[n * __IA] + __B[0];
 }
 
 void vDSP_vsmul(const float *__A, vDSP_Stride __IA, const float *__B, float *__C, vDSP_Stride __IC, vDSP_Length __N)
 {
 	#pragma clang loop vectorize(enable)
-    for (int n = 0; n < __N; ++n)
+    for (vDSP_Length n = 0; n < __N; ++n)
         __C[n] = __A[n] * __B[0];
 }
 
 void vDSP_vsmulD(const double *__A, vDSP_Stride  __IA, const double *__B, double *__C, vDSP_Stride  __IC, vDSP_Length  __N)
 {
 	#pragma clang loop vectorize(enable)
-    for (int n = 0; n < __N; ++n)
+    for (vDSP_Length n = 0; n < __N; ++n)
         __C[n * __IC] = __A[n * __IA] * __B[0];
 }
 
+void vDSP_vsma(const float *__A, vDSP_Stride __IA, const float *__B, const float *__C, vDSP_Stride __IC, float *__D, vDSP_Stride __ID, vDSP_Length __N)
+{
+    #pragma clang loop vectorize(enable)
+    for (vDSP_Length n = 0; n < __N; n++)
+        __D[n * __ID] = __A[n * __IA] * __B[0] + __C[n * __IC];
+}

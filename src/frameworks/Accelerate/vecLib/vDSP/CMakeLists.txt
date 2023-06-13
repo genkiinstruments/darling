@@ -9,7 +9,13 @@ add_darling_library(vDSP SHARED
 	src/extrema.c
     src/basic.c
     src/limit.c
-    )
+	src/type_conversion.cpp
+	src/frac.cpp
+	src/matrix.cpp
+)
+
+target_compile_options(vDSP PUBLIC -stdlib=libc++)
+
 make_fat(vDSP)
 target_link_libraries(vDSP system)
 install(TARGETS vDSP DESTINATION libexec/darling/usr/lib)
