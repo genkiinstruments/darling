@@ -24,7 +24,7 @@ void vDSP_maxmgv(const float *__A, vDSP_Stride __IA, float *__C, vDSP_Length __N
 {
 	*__C = -INFINITY;
 
-	if (__N != 1)
+	if (__IA != 1)
 	{
 		#pragma clang loop vectorize(enable)
 		for (vDSP_Length i = 0; i < __N; i++)
