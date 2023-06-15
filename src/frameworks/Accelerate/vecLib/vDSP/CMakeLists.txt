@@ -3,12 +3,14 @@ project(vDSP)
 set(DYLIB_INSTALL_NAME "/System/Library/Frameworks/Accelerate.framework/Versions/A/Frameworks/vecLib.framework/Versions/A/libvDSP.dylib")
 set(DYLIB_COMPAT_VERSION "1.0.0")
 set(DYLIB_CURRENT_VERSION "671.250.4")
+set(CMAKE_CXX_STANDARD 17)
 
 add_darling_library(vDSP SHARED
 	src/vDSP.c
 	src/extrema.c
     src/basic.c
-    src/limit.c
+	src/real.cpp
+	src/limit.c
 	src/type_conversion.cpp
 	src/frac.cpp
 	src/matrix.cpp
