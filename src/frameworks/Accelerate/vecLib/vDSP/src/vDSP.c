@@ -1069,18 +1069,6 @@ void* vDSP_svsD(void)
     return NULL;
 }
 
-void* vDSP_vaam(void)
-{
-    if (verbose) puts("STUB: vDSP_vaam called");
-    return NULL;
-}
-
-void* vDSP_vaamD(void)
-{
-    if (verbose) puts("STUB: vDSP_vaamD called");
-    return NULL;
-}
-
 void* vDSP_vabs(void)
 {
     if (verbose) puts("STUB: vDSP_vabs called");
@@ -1099,57 +1087,9 @@ void* vDSP_vabsi(void)
     return NULL;
 }
 
-void* vDSP_vadd(void)
-{
-    if (verbose) puts("STUB: vDSP_vadd called");
-    return NULL;
-}
-
-void* vDSP_vaddD(void)
-{
-    if (verbose) puts("STUB: vDSP_vaddD called");
-    return NULL;
-}
-
 void* vDSP_vaddi(void)
 {
     if (verbose) puts("STUB: vDSP_vaddi called");
-    return NULL;
-}
-
-void* vDSP_vaddsub(void)
-{
-    if (verbose) puts("STUB: vDSP_vaddsub called");
-    return NULL;
-}
-
-void* vDSP_vaddsubD(void)
-{
-    if (verbose) puts("STUB: vDSP_vaddsubD called");
-    return NULL;
-}
-
-void* vDSP_vam(void)
-{
-    if (verbose) puts("STUB: vDSP_vam called");
-    return NULL;
-}
-
-void* vDSP_vamD(void)
-{
-    if (verbose) puts("STUB: vDSP_vamD called");
-    return NULL;
-}
-
-void* vDSP_vasbm(void)
-{
-    if (verbose) puts("STUB: vDSP_vasbm called");
-    return NULL;
-}
-
-void* vDSP_vasbmD(void)
-{
-    if (verbose) puts("STUB: vDSP_vasbmD called");
     return NULL;
 }
 
@@ -1222,18 +1162,6 @@ void* vDSP_vdist(void)
 void* vDSP_vdistD(void)
 {
     if (verbose) puts("STUB: vDSP_vdistD called");
-    return NULL;
-}
-
-void* vDSP_vdiv(void)
-{
-    if (verbose) puts("STUB: vDSP_vdiv called");
-    return NULL;
-}
-
-void* vDSP_vdivD(void)
-{
-    if (verbose) puts("STUB: vDSP_vdivD called");
     return NULL;
 }
 
@@ -1477,18 +1405,6 @@ void* vDSP_vlintD(void)
     return NULL;
 }
 
-void* vDSP_vma(void)
-{
-    if (verbose) puts("STUB: vDSP_vma called");
-    return NULL;
-}
-
-void* vDSP_vmaD(void)
-{
-    if (verbose) puts("STUB: vDSP_vmaD called");
-    return NULL;
-}
-
 void* vDSP_vmax(void)
 {
     if (verbose) puts("STUB: vDSP_vmax called");
@@ -1549,18 +1465,6 @@ void* vDSP_vmmaD(void)
     return NULL;
 }
 
-void* vDSP_vmmsb(void)
-{
-    if (verbose) puts("STUB: vDSP_vmmsb called");
-    return NULL;
-}
-
-void* vDSP_vmmsbD(void)
-{
-    if (verbose) puts("STUB: vDSP_vmmsbD called");
-    return NULL;
-}
-
 void* vDSP_vmsa(void)
 {
     if (verbose) puts("STUB: vDSP_vmsa called");
@@ -1570,30 +1474,6 @@ void* vDSP_vmsa(void)
 void* vDSP_vmsaD(void)
 {
     if (verbose) puts("STUB: vDSP_vmsaD called");
-    return NULL;
-}
-
-void* vDSP_vmsb(void)
-{
-    if (verbose) puts("STUB: vDSP_vmsb called");
-    return NULL;
-}
-
-void* vDSP_vmsbD(void)
-{
-    if (verbose) puts("STUB: vDSP_vmsbD called");
-    return NULL;
-}
-
-void* vDSP_vmul(void)
-{
-    if (verbose) puts("STUB: vDSP_vmul called");
-    return NULL;
-}
-
-void* vDSP_vmulD(void)
-{
-    if (verbose) puts("STUB: vDSP_vmulD called");
     return NULL;
 }
 
@@ -1809,30 +1689,6 @@ void* vDSP_vsaddi(void)
     return NULL;
 }
 
-void* vDSP_vsbm(void)
-{
-    if (verbose) puts("STUB: vDSP_vsbm called");
-    return NULL;
-}
-
-void* vDSP_vsbmD(void)
-{
-    if (verbose) puts("STUB: vDSP_vsbmD called");
-    return NULL;
-}
-
-void* vDSP_vsbsbm(void)
-{
-    if (verbose) puts("STUB: vDSP_vsbsbm called");
-    return NULL;
-}
-
-void* vDSP_vsbsbmD(void)
-{
-    if (verbose) puts("STUB: vDSP_vsbsbmD called");
-    return NULL;
-}
-
 void* vDSP_vsbsm(void)
 {
     if (verbose) puts("STUB: vDSP_vsbsm called");
@@ -1980,18 +1836,6 @@ void* vDSP_vssq(void)
 void* vDSP_vssqD(void)
 {
     if (verbose) puts("STUB: vDSP_vssqD called");
-    return NULL;
-}
-
-void* vDSP_vsub(void)
-{
-    if (verbose) puts("STUB: vDSP_vsub called");
-    return NULL;
-}
-
-void* vDSP_vsubD(void)
-{
-    if (verbose) puts("STUB: vDSP_vsubD called");
     return NULL;
 }
 
